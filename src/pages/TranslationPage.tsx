@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Loader2, Copy, Download } from 'lucide-react';
 import { DocumentUpload } from '../components/DocumentUpload';
 import { geminiService } from '../lib/gemini';
+import { exportToWord } from '../lib/export';
 
 type SupportedLanguage = 'English' | 'Vietnamese' | 'French' | 'Spanish' | 'German' | 'Chinese' | 'Japanese';
 
@@ -58,7 +59,7 @@ export const TranslationPage: React.FC = () => {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const handleDownloadTranslation = () => {
+  const handleDownloadTranslationTxt = () => {
     const element = document.createElement('a');
     const file = new Blob([translatedText], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
@@ -66,6 +67,15 @@ export const TranslationPage: React.FC = () => {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+  };
+
+  const handleDownloadTranslationWord = async () => {
+    try {
+      await exportToWord(translatedText, 'translated-document');
+    } catch (error) {
+      console.error('Failed to export to Word:', error);
+      alert('Failed to export to Word format');
+    }
   };
 
   return (
@@ -151,12 +161,20 @@ export const TranslationPage: React.FC = () => {
                   {copiedIndex === 0 ? 'Copied!' : 'Copy Translated'}
                 </button>
                 <button
-                  onClick={handleDownloadTranslation}
+                  onClick={handleDownloadTranslationTxt}
                   className="p-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
-                  title="Download translation"
+                  title="Download as TXT"
                 >
                   <Download className="w-4 h-4" />
-                  Download
+                  TXT
+                </button>
+                <button
+                  onClick={handleDownloadTranslationWord}
+                  className="p-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                  title="Download as Word Document"
+                >
+                  <Download className="w-4 h-4" />
+                  Word
                 </button>
               </div>
             )}

@@ -3,6 +3,7 @@ import { Copy, Download, Loader2 } from 'lucide-react';
 import { DocumentUpload } from '../components/DocumentUpload';
 import { geminiService } from '../lib/gemini';
 import { SummaryResult } from '../types';
+import { exportToWord } from '../lib/export';
 
 type SummaryLength = 'brief' | 'medium' | 'comprehensive';
 
@@ -54,7 +55,7 @@ export const SummarizationPage: React.FC = () => {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const handleDownload = (filename: string) => {
+  const handleDownloadTxt = (filename: string) => {
     if (!summary) return;
 
     const content = `SUMMARY (${summary.summaryLength})\n${'='.repeat(50)}\n\n${summary.summary}\n\n\nKEY POINTS\n${'='.repeat(50)}\n${summary.keyPoints.map((p) => `• ${p}`).join('\n')}`;
@@ -66,6 +67,17 @@ export const SummarizationPage: React.FC = () => {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+  };
+
+  const handleDownloadWord = async (filename: string) => {
+    if (!summary) return;
+    const content = `SUMMARY (${summary.summaryLength})\n\n${summary.summary}\n\nKEY POINTS\n\n${summary.keyPoints.map((p) => `• ${p}`).join('\n')}`;
+    try {
+      await exportToWord(content, filename.replace('.txt', ''));
+    } catch (error) {
+      console.error('Failed to export to Word:', error);
+      alert('Failed to export to Word format');
+    }
   };
 
   return (
@@ -154,17 +166,27 @@ export const SummarizationPage: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleCopy(summary.summary, 0)}
-                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                   title="Copy summary"
                 >
                   <Copy className="w-4 h-4" />
+                  Copy
                 </button>
                 <button
-                  onClick={() => handleDownload('summary.txt')}
-                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                  title="Download summary"
+                  onClick={() => handleDownloadTxt('summary.txt')}
+                  className="p-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                  title="Download as TXT"
                 >
                   <Download className="w-4 h-4" />
+                  TXT
+                </button>
+                <button
+                  onClick={() => handleDownloadWord('summary.docx')}
+                  className="p-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                  title="Download as Word Document"
+                >
+                  <Download className="w-4 h-4" />
+                  Word
                 </button>
               </div>
             </div>

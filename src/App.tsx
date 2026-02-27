@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, MessageCircle, FileText, Settings } from 'lucide-react';
+import { BookOpen, MessageCircle, FileText, Settings, Lock } from 'lucide-react';
 import { TranslationPage } from './pages/TranslationPage';
 import { QAPage } from './pages/QAPage';
 import { SummarizationPage } from './pages/SummarizationPage';
@@ -8,12 +8,25 @@ import { geminiService, resetGenAIClient } from './lib/gemini';
 type Page = 'translate' | 'qa' | 'summarize' | 'settings';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passcode, setPasscode] = useState('');
+  const [loginError, setLoginError] = useState(false);
+  
   const [currentPage, setCurrentPage] = useState<Page>('translate');
   const [apiKeyConfigured, setApiKeyConfigured] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [showApiSetup, setShowApiSetup] = useState(false);
 
+  // Define required passcode (can be overridden in Vercel environment variables)
+  const REQUIRED_PASSCODE = import.meta.env.VITE_APP_PASSCODE || '123456';
+
   useEffect(() => {
+    // Check authentication
+    const savedAuth = localStorage.getItem('app_authenticated');
+    if (savedAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+
     // Check if API key is available from environment variables
     // Make sure we correctly read it whether it's VITE_ prefix or normal in cloud
     const envApiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -36,6 +49,17 @@ function App() {
     }
   }, []);
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passcode === REQUIRED_PASSCODE) {
+      setIsAuthenticated(true);
+      localStorage.setItem('app_authenticated', 'true');
+      setLoginError(false);
+    } else {
+      setLoginError(true);
+    }
+  };
+
   const handleSaveApiKey = () => {
     if (apiKey.trim()) {
       localStorage.setItem('gemini_api_key', apiKey);
@@ -51,6 +75,54 @@ function App() {
     { id: 'summarize', label: 'Summarize', icon: <FileText className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
   ];
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+          <div className="flex flex-col items-center mb-8">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-4 rounded-xl mb-4">
+              <Lock className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 text-center">
+              Academic Translator Access
+            </h1>
+            <p className="text-gray-500 text-sm mt-2 text-center">
+              Please enter the access code to continue.
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <input
+                type="password"
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                placeholder="Enter passcode..."
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:border-transparent transition-all outline-none text-center text-lg tracking-widest ${
+                  loginError 
+                    ? 'border-red-300 focus:ring-red-500 bg-red-50' 
+                    : 'border-gray-300 focus:ring-blue-500 bg-gray-50'
+                }`}
+                autoFocus
+              />
+              {loginError && (
+                <p className="text-red-500 text-sm mt-2 text-center">
+                  Incorrect passcode. Please try again.
+                </p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              Verify Access
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-50">
