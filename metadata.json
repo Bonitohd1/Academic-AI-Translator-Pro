@@ -1,0 +1,5 @@
+{
+  "name": "Academic AI Translator",
+  "description": "A specialized tool for PhD students to translate and analyze academic papers with high accuracy and reduced hallucinations, featuring a side-by-side PDF viewer, custom glossary, and grounded Q&A.",
+  "requestFramePermissions": []
+}
