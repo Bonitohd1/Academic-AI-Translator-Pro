@@ -3,7 +3,7 @@ import { BookOpen, MessageCircle, FileText, Settings } from 'lucide-react';
 import { TranslationPage } from './pages/TranslationPage';
 import { QAPage } from './pages/QAPage';
 import { SummarizationPage } from './pages/SummarizationPage';
-import { geminiService } from './lib/gemini';
+import { geminiService, resetGenAIClient } from './lib/gemini';
 
 type Page = 'translate' | 'qa' | 'summarize' | 'settings';
 
@@ -14,16 +14,24 @@ function App() {
   const [showApiSetup, setShowApiSetup] = useState(false);
 
   useEffect(() => {
-    // Check if API key is available
-    const hasApiKey = !!import.meta.env.VITE_GEMINI_API_KEY;
-    setApiKeyConfigured(hasApiKey);
+    // Check if API key is available from environment variables
+    // Make sure we correctly read it whether it's VITE_ prefix or normal in cloud
+    const envApiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+    const hasApiKey = !!envApiKey;
+    
+    // Auto configure if env has the key
+    if (hasApiKey) {
+      setApiKeyConfigured(true);
+      setApiKey(envApiKey);
+      return; // Skip local storage check
+    }
 
     // Load API key from localStorage if available
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) {
       setApiKey(savedKey);
       setApiKeyConfigured(true);
-    } else if (!hasApiKey) {
+    } else {
       setShowApiSetup(true);
     }
   }, []);
@@ -33,6 +41,7 @@ function App() {
       localStorage.setItem('gemini_api_key', apiKey);
       setApiKeyConfigured(true);
       setShowApiSetup(false);
+      resetGenAIClient(); // Reset client so it picks up new key
     }
   };
 

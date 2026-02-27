@@ -4,11 +4,24 @@ let genAI: GoogleGenAI | null = null;
 
 function getGenAI() {
   if (!genAI) {
+    // Try to get API key from localStorage first (for client-side usage)
+    // Fallback to environment variable (for development/server configuration)
+    const apiKey = localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '';
+    
+    if (!apiKey) {
+      throw new Error('API key must be set when using the Gemini API.');
+    }
+
     genAI = new GoogleGenAI({
-      apiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
+      apiKey: apiKey,
     });
   }
   return genAI;
+}
+
+// Reset the client when API key changes
+export function resetGenAIClient() {
+  genAI = null;
 }
 
 export class GeminiService {
